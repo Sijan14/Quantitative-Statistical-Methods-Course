@@ -1,0 +1,129 @@
+---
+title: "MIDTERM #1"
+author: "Mia Steinberg"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+This exam is open book. You may use any resources with the exception of your fellow students. Communicating with other students will be considered academic dishonesty and will result in a zero.
+
+
+Use the bechdel dataset in the fivethirtyeight package. Run the following code to install and include the package that contains the datase.
+```{r}
+install.packages("fivethirtyeight", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+library(fivethirtyeight)
+bechdel
+
+```
+1. The 'binary' variable tells you whether a film passes the Bechdel test and is labeled either PASS or FAIL. Using the tidy data wrangling functions and the pipe notation (%>%), summarize the dataset as described below.
+ - a. first, include the appropriate package for accessing tidy functions. (4 points)
+   b. group the dataset by the 'binary' variable (4 points)
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(rstatix)
+library(pwr)
+```
+
+```{r}
+bechdel %>% 
+  group_by(binary)
+``` 
+Summarize the domestic profits variable (domgross_2013) grouped by the 'binary' variable:
+ - c. mean (4 points)
+ - d. standard deviation (4 points)
+ - e. n (count) (4 points)
+
+```{r}
+bechdel %>% 
+  group_by(binary) %>% 
+  summarize(avg_profit = mean(domgross_2013, na.rm = TRUE), sd_profit = sd(domgross_2013, na.rm = TRUE), count = n())
+
+```
+
+ 2. Create a plot that examines the relationship between film budget (budget) and domestic profits (domgross_2013) in the year 2013. Plot film budget (budget) on the x-axis and domestic profits (domgross_2013) on the y-axis. (10 points)
+  - a. filter the bechdel dataset by year (year) 2013 before plotting. (4    points)
+  - b. Add some code to your plot to avoid overplotting. (5 points)
+  - c. Add a line to the plot that represents the model that best fits the data. (5 points)
+  
+   EXTRA CREDIT: 
+  -Change the labels to something more descriptive (5 points) 
+  -Map a third dimension of color to the 'binary' variable in the plot. This will color the datapoints according to whether a film passed or failed the Bechdel test (5 points)
+```{r}
+bechdel %>% 
+  filter(year == 2013) %>% 
+  ggplot(aes(x = budget, y = domgross_2013, color = binary)) + 
+  geom_point() + 
+  geom_jitter() + 
+  geom_smooth(method = "lm") + 
+  labs(x = "Film Budget in 2013", y = "Domestic Profits in 2013", title = "Film Budget as a Function of Domestic Profits")
+``` 
+
+3. Use a statistical test to determine whether the mean domestic profits (domgross_2013) are significantly different from each other as a function of the 'binary' variable. (10 points)
+ - a. Write up the results in APA style, including descriptives of the two groups, test statistics and what you would conclude about the data. (10 points) 
+ t-test result: t(1756.6) = 4.87, p = 1.215e-06
+
+Movies that failed (M = 107774371, SD = 140750940) the bechdal test had more domestic_profit than movie that passed (M = 79591919, SD = 102806062) the bechdel test. We fail to reject the null hypotheis as their difference is significant,  t(1756.6) = 4.87, p = 1.215e-06. Here the p-value is less than .05.
+ 
+ EXTRA CREDIT: Calculate the effect size for the mean differences above. (5 points)
+ 
+```{r}
+t.test(domgross_2013 ~ binary, bechdel, var.equal = FALSE, paired = FALSE)
+
+```
+  
+  
+Run the following code to load and filter a dataset.
+```{r}
+se_scores <- read_csv("https://vincentarelbundock.github.io/Rdatasets/csv/carData/OBrienKaiserLong.csv")
+se_scores <- se_scores %>%
+  filter(!phase == "fup")
+
+se_scores
+```
+A study was conducted to measure the impact of an instructional video on students' self-efficacy (confidence level) in statistics. The design was within-subjects: Each student's self-efficacy rating was measured before and after watching the video. The 'score' variable represents their self-efficacy score and the 'phase' variable represents whether it was measured before or after watching the video. 
+
+  
+4. using the tidy data wrangling functions and the pipe notation (%>%), summarize the 'score' variable grouped by 'phase': grouping (4 points). 
+Note, you may have to exclude na's from the descriptive functions 'na.rm = TRUE'
+ - a.mean (4 points)
+ - b. standard deviation (4 points)
+ - c. n (count) (4 points)
+```{r}
+se_scores %>% 
+  group_by(phase) %>% 
+  summarize(avg_score = mean(score, na.rm = TRUE), sd_score = sd(score, na.rm = TRUE), count = n())
+
+```
+
+5. Perform a statistical test to determine whether self-efficacy significantly increased or decreased from pre to post-video. Write up the results in APA style, including descriptives of pre and post, test statistics and what you would conclude about the effectiveness of the video. (10 points)
+t-test result: t(79) = 5.77, p = 1.476e-07
+
+Student's self-efficacy was higher in post-video condition(M = 5.75, SD = 2.33) than the pre-video condition (M = 4.38, SD = 1.87). We fail to reject the null hypotheis as their difference is significant,  t(79) = 5.77, p = 1.476e-07. Here the p-value is less than .05.
+
+
+#could add some interpretation here (i.e., that the video was effective in elevating self-efficady)
+```{r}
+
+  t.test(score ~ phase, se_scores, var.equal = TRUE, paired = TRUE)
+
+
+```
+
+
+
+6. Create a plot that displays the mean scores by phase. (10 points)
+```{r}
+
+se_scores %>% 
+  ggplot(aes(x = phase, y = score)) + 
+  stat_summary(fun = "mean", geom = "bar") + 
+  stat_summary(fun.data = "mean_cl_normal", geom = "errorbar", width = 0.1) + 
+  labs(x = "Phase", y = "Self-efficacy Score", title = "Effects of instructional video on self-efficacy")
+
+```
+
+
+
+
+  
