@@ -1,0 +1,134 @@
+---
+title: 'Midterm #2'
+author: "Sijan"
+date: '2022-12-01'
+output: pdf_document
+---
+
+## Load Packages
+1. Start by loading any necessary packages, including “tidyverse” , “lm.beta” and “rstatix”.  Load these in a separate code chunk and add code to the chunk so that R doesn’t print warnings and messages in your knitted file. Hint: you will add something to the {r } brackets to suppress those messages. (5 points)
+```{r warning=FALSE}
+
+tinytex::install_tinytex(force=TRUE)
+library(tinytex)
+library(tidyverse)
+library(lm.beta)
+library(rstatix)
+
+```
+## Read data file
+2. Read in the data file Tworek and Cimpian 2016 Study 1. (5 points)
+```{r}
+mid_data <- read.csv("Tworek and Cimpian 2016 Study 1 - Tworek and Cimpian 2016 Study 1.csv")
+```
+## Clean data
+3. This data file includes some participants who were excluded from the data analysis because they live outside the United States, or because they failed an attention check. Using the filter() function, use the excluded variable to exclude those cases. Create a new data file that only contains those who were not excluded (excluded = 0). (5 points)
+```{r}
+clean_data <- mid_data %>% 
+  filter(excluded == 0)
+```
+## Correlation test
+4. Perform an analysis to determine whether people’s tendency to believe the status quo ought to be (Ought_Score) is correlated with their inherence bias (Inherence_Bias), their education level (educ), intelligence (RavensProgressiveMatrix_sum), conservatism (conserv), and belief in a just world (Belief_in_Just_World). You may use the cor_test() function in rstatix.  Write a sentence in APA style describing which variables are significantly correlated with Ought_Score, including the correlation coefficient, confidence intervals and significance values. (20 points)
+```{r}
+cor <- cor_test(clean_data, c(Ought_Score, Inherence_Bias, educ, RavensProgressiveMatrix_sum, conserv, Belief_in_Just_World))
+knitr::kable(cor)
+```
+##### A Pearsaon correlation coefficient was computed to assess the linear relationship between the status quo ought to be and inherence bias, their education level, intelligence, conservitism and their belief in a just world. There was a medium significant positive correlation between Ought_score and Inherence bias, r(120) = 0.30, 95% CI = [.13, .46] p = 0.000651. 
+
+##### The rest of the variables were weakly correlated to the Ought_Score but none of them were significant correlation as p>.05 
+
+## Prediction model
+5. Now, you’ll want to show that the relationship between Ought_Score and Inherence_Bias is robust, specifically whether their inherence bias predicts their ought score with other related variables in the model. First, mean-center the same predictor variables as above: inherence bias, intelligence (RavensProgressiveMatrix_sum), conservatism, inherence bias, education level, and belief in a just world (Belief_in_Just_World). Enter the mean-centered variables as predictors in a model with Ought_Score as an outcome. Use the lm() function to run your model and lm.beta to generate standardized coefficients. (20 points)
+```{r}
+centre <- function(var){
+  var - mean(var, na.rm = TRUE)
+}
+
+clean_data <- clean_data %>% 
+  mutate(
+    across(c(Inherence_Bias, RavensProgressiveMatrix_sum, conserv, educ, Belief_in_Just_World), list(cent = centre))
+)
+
+model <- lm(Ought_Score ~ Inherence_Bias_cent + RavensProgressiveMatrix_sum_cent + conserv_cent + educ_cent + Belief_in_Just_World_cent, data = clean_data)
+lm.beta(model)
+```
+## Extra Credit
+
+Extra credit: explain why we mean-center the predictors. (5 points)
+
+##### Centering a predictor means moving its means to 0. We do this by subtracting the mean from every value of the predictor variable. It helps us see the deviation/variance of the predictor variables from the mean more easily. It is particularly helpful in a linear regression analysis, as it prevents multicollinearity issues (high linear correaltion between predictor variables). It also helps in hierarchial regression analysis in the interpretation of simple slope as y-intercept will be based on the mean value.
+
+Extra credit: explain why the variables that are significant in the correlation matrix are no longer significant when added to a regression model. (5 points)
+
+##### A correlation only tells us the strength and direction of a relationship. So a correlation is tested for two variables at a time. While on the other hand, a regression model help us predict a dependent variable (DV) using one or more independent varaibles (IV). Thus, with the addition of more independent variables in a model, one variable loses its effect (beta weight) on the DV as they all become partially correlated to the DV. As a result it changes the overall beta value which leads to some variables being insignificant (that was previously significant in pearson's r)
+
+## Gender recoded + added to regression model
+
+6. Gender is currently coded as 1 = men, 2 = women. Recode women as 0 and men as 1 and enter your recoded variable as a predictor in the model above. Re-run the model. (10 points)
+```{r}
+data_coded <- clean_data %>% 
+  mutate(gender = if_else(gender == "1",1 ,0 ) )
+
+model <- lm(Ought_Score ~ Inherence_Bias_cent + RavensProgressiveMatrix_sum_cent + conserv_cent + educ_cent + Belief_in_Just_World_cent + gender, data = data_coded)
+lm.beta(model)
+```
+
+## APA-style analysis
+
+7. Prepare an APA-style results section to describe the analysis above and results conducted above. Include an interpretation of these results (i.e., what do they say about human behavior?) (20 points)
+```{r}
+summary(model)
+``` 
+##### A multiple linear regression was calculated to predict Ought_Score based on Inherence Bias, Intelligence,  conservatism, education level, belief in a just world and gender. The results of the regression indicated the six predictors explained 11.32% of the variance (R^2 = 0.11, F(6,115) = 2.45, p <.05). It was found that only Inherence bias significantly predicted Ought_Score (ß = 0.30, p < .01). The results of the study suggests that the Inherence bias in participants' explanations accounts for the variance in their likelihood of inferring oughts. So Inherence bias is a significant predictor of the extent to which the participant view typical outcomes as good and desirable.
+
+8. Create a table to depict the results of the regression analysis. 
+```{r}
+confint(model)
+```
+##### The table is attached in a word document
+Link - https://docs.google.com/document/d/1iSgTpWhMNWo_gnENX6ShbzO3inuacncZ/edit?usp=share_link&ouid=110448297081662422472&rtpof=true&sd=true
+
+## Extra credit: 
+
+## Trial 1
+Conservatism is coded on a scale from 1-9. Consider those who score 1-3 as liberals, 4-6 as moderates and 7-9 as conservatives. Create a new variable that compares liberals and conservatives and a variable that compares liberals and moderates. Enter both into the regression model above and write up the results of the effect on political conservatism on ought scores. (10 points)
+
+```{r}
+
+Conserv_recoded <- data_coded %>% 
+  mutate(liberals = if_else(conserv < 4, 1, 0),
+         moderates = if_else(conserv > 3 & conserv < 7, 1, 0 ),
+         conservatives = if_else(conserv > 7 & conserv < 10, 1, 0 ))
+
+model1 <- lm(Ought_Score ~ liberals + conservatives, data = Conserv_recoded)
+summary(model1)
+lm.beta(model1)
+```
+
+
+```{r}
+model2 <- lm(Ought_Score ~ liberals + moderates, data = Conserv_recoded)
+summary(model2)
+lm.beta(model2)
+```
+
+## Trial 2
+Conservatism is coded on a scale from 1-9. Consider those who score 1-3 as liberals, 4-6 as moderates and 7-9 as conservatives. Create a new variable that compares liberals and conservatives and a variable that compares liberals and moderates. Enter both into the regression model above and write up the results of the effect on political conservatism on ought scores. (10 points)
+```{r}
+Conserv_recoded1 <- data_coded %>% 
+  mutate(new_conserv1 = if_else(conserv < 4, "liberals", 
+                                if_else(conserv > 3 & conserv < 7,"moderates","conservatives")))
+
+Conserv_recoded1$new_conserv1 = as_factor(Conserv_recoded1$new_conserv1)
+contrast1 = c(1, 0, -1)
+contrast2 = c(1, -1, 0)
+
+contrasts(Conserv_recoded1$new_conserv1) = cbind(contrast1, contrast2)
+
+contrasts(Conserv_recoded1$new_conserv1)
+
+m_contrasts <- lm(Ought_Score ~ new_conserv1, data = Conserv_recoded1)
+summary(m_contrasts)
+
+```
+
