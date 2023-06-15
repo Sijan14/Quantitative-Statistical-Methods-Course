@@ -1,0 +1,79 @@
+---
+title: "factorial designs activity"
+author: "Paola, Sijan, Chinwe, Princess "
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+
+This lab activity uses the open data from Experiment 1 of Maglio and Polman (2014) to teach two-way ANOVA. Results of the activity provided below should exactly reproduce the results described in the paper. 
+
+https://journals.sagepub.com/stoken/default+domain/hv65WpzIjfXtVjXCbJw6/full
+https://docs.google.com/spreadsheets/d/1GVk6pCpyvaj1SLS5AzhNzxJhpyXHBpW2PSqOiOrF6YI/edit?usp=sharing
+
+CITATION 
+Maglio, S. J., & Polman, E. (2014). Spatial orientation shrinks and expands psychological distance. Psychological Science, 25, 1345-1352. 
+
+LEARNING OBJECTIVES 
+-Conduct two-way ANOVA 
+-Conduct follow-up tests for significant interaction 
+-Create a figure 
+
+
+A person’s perceived distance from a location can be affected by the actual spatial distance to that location, but by psychological factors as well. For example, the distance to the nearest gas station may seem farther when one’s car is running low on gas. In their research, Maglio and Polman (2014) sought to examine whether a person’s spatial orientation (facing toward a location vs. facing away from it) would also affect its perceived distance. 
+To study this, the researchers recruited 202 riders on the Toronto subway green line. All participants were recruited at the Bay subway station (see map). 
+Half of the participants were headed eastbound (toward Bloor-Yonge and Sherbourne) whereas the other half were headed westbound (toward St. George and Spadina). Participants were randomly assigned to indicate the subjective distance of one of the four subway stations (Bloor-Yonge, Sherbourne, St. George, or Spadina)
+
+
+1. Import the data file 
+2. Perform the two-way ANOVA to test whether orientation (ORIENTATION: 1 = toward, 2 = away from) interacts with station (Spadina, St. George, Bloor-Yonge, Sherbourne) to impact perceived distance (DISTANCE). 
+ 
+4. Decompose the interaction by station: Run a post-hoc test looking at the effect of orientation at each station 
+5. Prepare an APA-style results section to describe each of the analyses conducted above. 
+
+EXTRA CREDIT:
+6. Generate a line graph to depict the interaction between orientation and station. 
+
+
+#1.
+##Change directory to where file is on your computer
+```{r}
+library(rstatix)
+subway <- read_csv("~/Downloads/S1_subway.csv")
+subway$orientation <- as.factor(subway$orientation)
+subway$station <- as.factor(subway$station)
+names(subway)
+```
+#2. Perform the two-way ANOVA to test whether orientation (ORIENTATION: 1 = toward, 2 = away from) interacts with station (Spadina, St. George, Bloor-Yonge, Sherbourne) to impact perceived distance (DISTANCE). 
+```{r}
+options(scipen = 999)
+library(rstatix)
+aov_model <- anova_test(subway, subjective_distance ~ orientation * station, effect.size = "pes", type = 3)
+get_anova_table(aov_model)
+
+  
+```
+#4. Decompose the interaction by station: Run a post-hoc test looking at the effect of orientation at each station
+```{r}
+options(scipen = 999)
+subway %>% group_by(station) %>%
+  tukey_hsd(subjective_distance ~ orientation)
+
+```
+# 5. Prepare an APA-style results section to describe each of the analyses conducted above. 
+We carried out a 2 (orientation: toward, away from) x 4 (station:Spadina, St. George, Bloor-Yonge, Sherbourne) analysis of variance (ANOVA) on on perceived distance, which revealed a significant main effect of the station, F(3, 194)=24.10, p<.001, n^2 = 0.272. This also revealed a not significant main effect of the orientation, F(1, 194)=0.317, p>.05, n^2 = 0.002. This main effect was qualified by an interaction between orientation and station, F(3, 194)=16.283, p<.001, n^2 = 0.201. We decomposed the interaction by station by looking at the effect of orientation at each station.
+
+# 6. Generate a line graph to depict the interaction between orientation and station. 
+```{r}
+  subway %>%
+      ggplot(aes(x = subjective_distance, y = orientation, color = station, group = station)) +
+      ylim(1, 4) +
+      stat_summary(fun = "mean", geom = "line", alpha = .7) +
+      stat_summary(fun = "mean", geom = "point", 
+                   size = 4) +
+      stat_summary(fun.data = "mean_cl_normal",
+                   geom = "errorbar",
+                   width = .2) 
+```
+
+

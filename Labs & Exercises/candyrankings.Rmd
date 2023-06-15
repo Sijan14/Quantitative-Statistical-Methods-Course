@@ -1,0 +1,114 @@
+---
+title: "candy"
+author: "Mia"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+[https://data.world/fivethirtyeight/candy-power-ranking]
+
+```{r setup, include=FALSE}
+install.packages("corrplot", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+install.packages("rstatix", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+install.packages("lm.beta", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+install.packages("generics", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+install.packages("fivethirtyeight", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+
+library(corrplot)
+library(tidyverse)
+library(rstatix)
+library(generics)
+library(fivethirtyeight)
+library(lm.beta)
+```
+
+#Recode all true/false as numbers
+```{r load_candy}
+names(candy_rankings) 
+candy_rankings$competitorname
+recoded_candy <- candy_rankings %>% mutate(is_caramel = if_else(caramel == TRUE, 1, 0),
+                                      is_chocolate = if_else(chocolate == TRUE, 1, 0),
+                                      is_fruity = if_else(fruity == TRUE, 1, 0),
+                                      is_caramel = if_else(caramel == TRUE, 1, 0),
+                                      is_nougat = if_else(nougat == TRUE, 1, 0),
+                                      is_peanutyalmondy = if_else(peanutyalmondy == TRUE, 1, 0),
+                                      is_crispedricewafer = if_else(crispedricewafer == TRUE, 1, 0),
+                                      is_hard = if_else(hard == TRUE, 1, 0),
+                                      is_bar = if_else(bar == TRUE, 1, 0),
+                                      is_pluribus = if_else(pluribus == TRUE, 1, 0)
+                                    )
+
+```
+
+
+Run a correlation matrix to see overall relationships between variables
+But first, we must:
+-remove all non-numeric columns
+
+```{r}
+candy_corr <- recoded_candy %>% select(-competitorname, -chocolate, -fruity, -caramel, -peanutyalmondy, -nougat, -crispedricewafer, -crispedricewafer, -hard, -bar, -pluribus)
+
+```
+
+
+Output correlation matrix
+```{r}
+corrs <- cor_test(short)
+corrs
+```
+
+
+run cor() which returns a matrix
+create a correlation plot
+```{r}
+corr_matrix <- cor(short)
+corrplot(corr_matrix)
+```
+
+
+Run a regression model with run the model with *is_bar* predicting *winpercent*
+Output with standardized coefficient using lm.beta
+```{r}
+model1 <- lm(winpercent ~ is_bar, recoded_candy)
+tidy(lm.beta(model1))
+```
+
+output the model statistics
+```{r}
+glance(model1)
+```
+Add chocolate to the model
+```{r}
+model2 <- lm(winpercent ~ is_bar + is_chocolate, recoded_candy)
+tidy(lm.beta(model2))
+```
+
+Run a model with all of the candy characterisics
+```{r}
+model3 <- lm(winpercent ~ is_chocolate + is_fruity + is_caramel + is_peanutyalmondy + is_nougat + is_crispedricewafer + is_hard + is_bar + is_pluribus, recoded_candy)
+tidy(lm.beta(model3))
+```
+output model statistics
+```{r}
+glance(model3)
+```
+compare models
+```{r}
+anova(model2, model3)
+
+```
+
+Additional questions:
+- Look at the regression model above with all candy characteristics. How would you quantify the relationship between fruity and the outcome (winpercent)?
+- What are the top 3 predictors in model3? Based on this, what type of candy would you propose to a candy manufacturer?
+- Whether or not a candy was a bar was a positive predictor in the first model but then negative in the full model. Why do you think that happened?
+- Is model3 significantly different than model2
+- Add pricepercent to the above model and run it. Is it significantly different from the model without?
+- Center pricepercent and re-run the model. What is different about the centered versus uncentered models?
+
+
+
+
+
+
+

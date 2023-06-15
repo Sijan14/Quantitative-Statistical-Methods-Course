@@ -1,0 +1,97 @@
+---
+title: "contrasts_exercise"
+author: "Paola, Kayla, Sijan"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+
+CONDITION LEVELS
+1- personal me (self-immersed)
+2-personal she (self-distance)
+3-nonpersonal me (other-immersed)
+4-nonpersonal she (other-distance)
+
+
+article: https://journals.sagepub.com/stoken/default+domain/vIg5KBmaiJHKTXfUpXZK/full
+data: https://docs.google.com/spreadsheets/d/1n9k45LeI5ZlwAkazk1RebT1zKbanaPha5iqbYaO0lMM/edit?usp=sharing]
+
+```{r }
+library(tidyverse)
+library(rstatix)
+
+
+grossman <- read_csv("grossman_kross.csv")
+grossman$CONDITION <- as.factor(grossman$CONDITION)
+names(grossman)
+
+```
+
+#plot the means of WISDOM by condition
+```{r}
+library(ggplot2)
+ggplot(grossman, aes(CONDITION, WISDOM))+
+  stat_summary(fun="mean", geom="bar")
+```
+
+
+##run ANOVA with WISDOM as DV and CONDITION as IV. Is the overall omnibus test significant? 
+```{r}
+aov_model <- anova_test(grossman, WISDOM ~ CONDITION, detailed = TRUE)
+get_anova_table(aov_model)
+
+```
+
+
+
+#Run the following contrasts by replacing the x's in the code chunk below with contrast coefficients.
+##Contrast 1: Contrast participants in the self-immersed condition (condition 1) with participants in the other-immersed and other-distanced conditions combined (conditions 3 and 4)
+##Contrast 2: Compare self-immersed (condition 1) with self-distance (condition 2)
+##Contrast 3: Compare other-immersed (condition 3) with other-distance (condition 4)
+##Contrast 4: Compare self-distance (condition 2) with other-immersed and other-distance (conditions 3 and 4)
+
+```{r contrasts}
+
+contrast1 = c(2, 0, -1, -1)
+contrast2 = c(1, -1, 0, 0)
+contrast3 = c(0, 0, 1, -1)
+contrast4 = c(0, 2, -1, -1)
+
+#assign contrasts to condition 
+contrasts(grossman$CONDITION) = cbind(contrast1, contrast2, contrast3, contrast4)
+
+#make sure contrasts are assigned correctly
+contrasts(grossman$CONDITION)
+
+#run 
+m_contrasts <- lm(WISDOM ~ CONDITION, grossman)
+summary(m_contrasts)
+
+```
+
+#Write up the one-way ANOVA results in APA style. Write the results of the omnibus test and of the planned contrasts. Did you replicate the authors' findings
+
+<<  >>
+
+
+
+##run a posthoc test to compare all conditions to each other
+```{r}
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

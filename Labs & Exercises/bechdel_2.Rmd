@@ -1,0 +1,92 @@
+---
+title: "class6activity"
+author: "Mia"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## The Bechdel Test
+  - there are at least two named women in the picture  
+  - they have a conversation with each other at some point  
+  - and that conversation isn’t about a male character — 
+then it passes "The Rule"
+
+
+```{r, message = FALSE, warning = FALSE}
+install.packages("moderndive", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+install.packages("fivethirtyeight", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+install.packages("lm.beta", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+install.packages("skimr", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+install.packages("rstatix", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+
+
+```
+
+
+```{r message=FALSE, warning=FALSE}
+#options(scipen = 10)
+library(moderndive)
+library(tidyverse)
+library(fivethirtyeight)
+library(lm.beta)
+library(rstatix)
+library(Hmisc)
+library(gapminder)
+
+bechdel
+
+```
+
+
+#create dummy variables
+#pass is based on binary variable and coded 1 or 9
+# 3 new dummy variables based on clean_test compare each level to 'nowomen'
+
+```{r}
+bechdel_recoded <- bechdel %>% 
+  mutate(pass = if_else(binary == "PASS", 1, 0))
+
+bechdel_recoded <- bechdel_recoded %>% 
+  mutate(
+  notalk = if_else(clean_test == "notalk", 1, 0),
+  men = if_else(clean_test == "men", 1, 0),
+  ok = if_else(clean_test == "ok", 1, 0))
+
+names(bechdel_recoded)
+
+
+
+
+```
+  
+
+#regression predicting domestic gross from each level of clean_test
+```{r}
+
+model <- lm(domgross_2013 ~ notalk + men + pass, bechdel_recoded)
+tidy(lm.beta(model))
+
+```
+
+
+
+#mean centering budget and domestic gross so that model parameters are based on the mean values of those predictors instead of 0 (because 0 is less meaningful here)
+#running regression on uncentered and centered predictors -- look at how intercept changes
+```{r}
+
+bechdel_recoded <- bechdel_recoded %>% 
+  mutate(cbudget_2013 = budget_2013 - mean(budget_2013, na.rm = TRUE),
+  cdomgross_2013 = domgross_2013 - mean(domgross_2013, na.rm = TRUE))
+
+
+model <- lm(intgross_2013 ~ budget_2013 + domgross_2013, bechdel_recoded)
+tidy(lm.beta(model))
+
+model2 <- lm(intgross_2013 ~ cbudget_2013 + cdomgross_2013, bechdel_recoded)
+tidy(lm.beta(model2))
+
+
+```
+
+
+

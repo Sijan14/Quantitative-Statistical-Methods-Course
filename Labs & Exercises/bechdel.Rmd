@@ -1,0 +1,75 @@
+---
+title: "class6activity"
+author: "Mia"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## The Bechdel Test
+  - there are at least two named women in the picture  
+  - they have a conversation with each other at some point  
+  - and that conversation isn’t about a male character — 
+then it passes "The Rule"
+
+```{r, echo = FALSE, out.width="75%", fig.align='center'}
+knitr::include_graphics("https://s26162.pcdn.co/wp-content/uploads/2021/09/bechdeltestcartoon.jpeg")
+```
+
+```{r, message = FALSE, warning = FALSE}
+install.packages("moderndive", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+install.packages("fivethirtyeight", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+install.packages("lm.beta", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+install.packages("skimr", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+install.packages("rstatix", repos = "http://cran.us.r-project.org", dependencies = TRUE)
+
+```
+
+
+```{r message=FALSE, warning=FALSE}
+options(scipen = 10)
+library(moderndive)
+library(tidyverse)
+library(fivethirtyeight)
+library(lm.beta)
+library(rstatix)
+library(Hmisc)
+library(gapminder)
+
+
+bechdel_coded <- bechdel %>% 
+  mutate(dbinary = if_else(binary == "PASS", 1, -1),
+  level_women =case_when(clean_test == "nowomen" ~ 0,
+                                clean_test == "notalk" ~ 1,
+                                  clean_test == "men" ~ 2,
+                                  binary == "PASS" ~ 3))
+         
+```
+  
+
+
+```{r corr_test}
+bechdel_coded %>%
+  dplyr::select(dbinary, level_women, budget_2013, domgross_2013, intgross_2013) %>%
+  cor_test()
+
+```
+
+
+What do you notice about the standardized coefficient (which is output from lm.beta) compared with the correlation coefficient between domgross_2013? 
+
+```{r}
+
+model <- lm(domgross_2013 ~ level_women, bechdel_coded)
+summary(model)
+lm.beta(model)
+
+```
+
+What happens when budget is added?
+```{r}
+
+model <- lm(domgross_2013 ~ level_women + budget_2013, bechdel_coded)
+summary(model)
+lm.beta(model)
+
+```

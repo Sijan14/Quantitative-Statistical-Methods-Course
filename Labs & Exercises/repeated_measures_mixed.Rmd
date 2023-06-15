@@ -1,0 +1,214 @@
+---
+title: "repeated measures"
+author: "Mia"
+date: "`r Sys.Date()`"
+output: html_document
+---
+data: [https://docs.google.com/spreadsheets/d/1OmicmeuzvjiVeGZzeqdbWfIMHpE8FmeBG8t7matWtEE/edit?usp=sharing]
+article: [https://journals.sagepub.com/stoken/default+domain/tSMZXMeiaDdnfZ8GbU9y/full]
+
+```{r}
+library(tidyverse)
+library(lm.beta)
+library(rstatix)
+```
+
+
+```{r }
+zhang <- read_csv("Zhang et al. 2014 Study 3 - Zhang et al. 2014 Study 3.csv")
+```
+#rename variables so prefix is consistent
+```{r}
+zhang <- zhang %>% rename(
+                          InterestTime1 = T1_Predicted_Interest_Composite,
+                          InterestTime2 = T2_Actual_Interest_Composite
+                          )
+```
+
+#focus on interest
+#create id column
+```{r}
+interest <- zhang %>% 
+  mutate(id = row_number()) %>% 
+  select(id, Condition, InterestTime1, InterestTime2) 
+
+
+view(interest)
+
+ 
+```
+
+#pivot_longer reshapes from wide to long:
+cols = the columns that need to be reshaped (our repeated measure factor)
+names_to = new column name for our repeated measure factor
+names_prefix = after prefix is the level of our repeated measure factor
+values_to = name of the column where the value goes (where to put the value of  InterestTime1, InterestTime2)
+
+```{r}
+
+interest_long <- interest %>% pivot_longer(
+  cols = starts_with("InterestTime"),
+  names_to = "time",
+  names_prefix = "InterestTime",
+  values_to = "interest"
+)
+
+view(interest_long)
+
+```
+
+anova_test() [rstatix]. Key arguments for performing repeated measures ANOVA:
+*data:* data frame
+*dv:* (numeric) the dependent (or outcome) variable name.
+*wid:* variable name specifying the case/sample identifier.
+*within:* within-subjects factor or grouping variable
+```{r}
+
+model <- interest_long %>% anova_test( 
+                dv = "interest",
+                wid = "id",
+                within = "time",
+                detailed = TRUE
+                )
+  
+get_anova_table(model)
+
+```
+```{r}
+
+interest_long %>% 
+  group_by(time) %>% 
+  get_summary_stats(interest, type = "mean_sd")
+
+```
+
+
+#now run mixed model
+```{r}
+model <- interest_long %>% anova_test(  
+                dv = "interest",
+                wid = "id",
+                between = "Condition",
+                within = "time",
+                detailed = TRUE
+                )
+    
+get_anova_table(model)
+```
+
+#run pairwise test of condition at each time point
+#correct for multiple tests
+condition 1: recall ordinary event
+  condition 2: recall extraordinary event
+```{r}
+pwtest <- interest_long %>%
+  group_by(time) %>%
+  pairwise_t_test(
+    interest ~ Condition, 
+    p.adjust.method = "bonferroni",
+    )
+
+pwtest
+interest_long %>% group_by(time, Condition) %>% get_summary_stats(interest, type = "mean_sd")
+  
+  
+
+```
+Run the same analysis for curiosity. Were participants more or less curious to reread their romantic interactions in predicted (T1) versus actual (T2)?
+First run the repeated measures then the mixed model.
+How did it differ by condition?
+T1_Predicted_Curious	T2_Actual_Curious
+
+#rename variables so prefix is consistent
+```{r}
+zhang <- zhang %>% rename(
+                          CuriousTime1 = T1_Predicted_Curious,
+                          CuriousTime2 = T2_Actual_Curious
+                          )
+```
+
+#focus on curious
+#create id column
+```{r}
+curious <- zhang %>% 
+  mutate(id = row_number()) %>% 
+  select(id, Condition, CuriousTime1, CuriousTime2) 
+
+view(curious)
+
+```
+
+#pivot_longer reshapes from wide to long:
+cols = the columns that need to be reshaped (our repeated measure factor)
+names_to = new column name for our repeated measure factor
+names_prefix = after prefix is the level of our repeated measure factor
+values_to = name of the column where the value goes (where to put the value of  InterestTime1, InterestTime2)
+
+```{r}
+
+curious_long <- curious %>% pivot_longer(
+  cols = starts_with("CuriousTime"),
+  names_to = "time",
+  names_prefix = "CuriousTime",
+  values_to = "curiosity"
+)
+
+view(curious_long)
+
+```
+
+
+```{r}
+
+model1 <- curious_long %>% anova_test( 
+                dv = "curiosity",
+                wid = "id",
+                within = "time",
+                detailed = TRUE
+                )
+  
+get_anova_table(model1)
+
+```
+```{r}
+
+curious_long %>% 
+  group_by(time) %>% 
+  get_summary_stats(curiosity, type = "mean_sd")
+
+```
+Curiosity increased from time 1(M = 3.99, SD = 1.42) to time 2 (M = 4.33, SD = 1.42), F(1, 129) = 5.80, p < 0.0001, eta2[g] = 0.01. 
+#now run mixed model
+```{r}
+model1 <- curious_long %>% anova_test(  
+                dv = "curiosity",
+                wid = "id",
+                between = "Condition",
+                within = "time",
+                detailed = TRUE
+                )
+    
+get_anova_table(model1)
+```
+
+#run pairwise test of condition at each time point
+#correct for multiple tests
+condition 1: recall ordinary event
+  condition 2: recall extraordinary event
+```{r}
+pwtest1 <- curious_long %>%
+  group_by(time) %>%
+  pairwise_t_test(
+    curiosity ~ Condition, 
+    p.adjust.method = "bonferroni",
+    )
+
+pwtest1
+curious_long %>% group_by(time, Condition) %>% get_summary_stats(curiosity, type = "mean_sd")
+```
+Were participants more or less curious to reread their romantic interactions in predicted (T1) versus actual (T2)?
+First run the repeated measures then the mixed model.
+How did it differ by condition?
+
+##### Participants were more curious in actual condition than predicted condition but the difference in curiosity was not significant, F(1, 129) = 0.91, p = 0.34, eta2[g] = 0.005. Participants curiosity increased from time 1 to time 2, F(1, 129) = 6.16, p < 0.01, eta2[g] = 0.015. We also found an effect of time and condition in curiosity level that was significant implying participants were more curious in actual condition than in predicted condition from time 1 to time 2, F(1, 129) = 5.12, p < 0.05, eta2[g] = 0.012.
+

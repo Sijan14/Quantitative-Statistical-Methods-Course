@@ -1,0 +1,63 @@
+---
+title: "Class activity"
+author: "Mia"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+##Histogram with Student level of expertise collecting own data
+Below is the code to create histogram displaying frequencies(counts) of data collection expertise.
+1. Create another histogram that displays expertise using R
+  a. Change the default binwidth in the histogram function so that bins are split across whole numbers.
+  b. Change the label of the x-axis to something more descriptive. 
+  c. Create a title for your plot
+  d. What does this visual tell you? How would you describe the level or levels of students' R expertise?
+
+```{r}
+#Install the required package
+install.packages('googlesheets4')
+#Load the required library 
+library(googlesheets4)
+library(tidyverse)
+#Read google sheets data into R
+students <- read.csv("students.csv")
+```
+
+```{r}
+ggplot(students, aes(expertise_R)) +
+  geom_histogram(binwidth = 1) + labs(x = "Expertise with R", y = "Number of sstudents", title = "Students Expertise with R")
+```
+2. Create a graph to show the relationship between expertise in linear models with expertise in hypothesis testing (hint: both are continuous variables).
+  a. Add a regression line. What does this line tell you about the relationship between those two variables?
+  b. Add random noise to avoid overplotting.
+```{r}
+ggplot(students, aes(expertise_linear, expertise_hypothesis)) +
+  geom_jitter() +
+   geom_point() +
+    geom_smooth(method = "lm")
+```
+3. Create a bar graph that shows the mean of expertise in collecting data.
+   a. Add an error bar that is the 95% confidence interval. 
+  Extra credit: Extend #3 by showing the means of data collection expertise by lab experience. Hint: this is a barplot     with one independent variable.
+
+```{r}
+  ggplot(students, aes(lab_experience, expertise_data)) + 
+  stat_summary(fun = "mean", geom = "bar") +
+  stat_summary(fun.data = "mean_cl_normal",
+               geom = "errorbar",
+               width = .1)
+```
+
+4. Create a boxplot using the gapminder data like the one in the example in the class lecture, filtering by the year 2007. Then create a separate one but filtering by the year 1952. What has changed in the last 55 years in terms of life expectancy across the continents? Can you identify the outliers in the dataset?
+```{r}
+gapminder %>% filter(year == 2007) %>%
+ggplot(aes(x = continent, y = lifeExp)) +
+  geom_boxplot()
+```
+```{r}
+gapminder %>% filter(year == 1957) %>%
+ggplot(aes(x = continent, y = lifeExp)) +
+  geom_boxplot()
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
